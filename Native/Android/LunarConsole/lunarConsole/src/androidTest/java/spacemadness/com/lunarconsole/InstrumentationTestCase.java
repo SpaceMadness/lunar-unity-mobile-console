@@ -19,11 +19,11 @@
 //  limitations under the License.
 //
 
-
 package spacemadness.com.lunarconsole;
 
 import android.content.Context;
-import android.support.test.InstrumentationRegistry;
+
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import junit.framework.TestCase;
 
