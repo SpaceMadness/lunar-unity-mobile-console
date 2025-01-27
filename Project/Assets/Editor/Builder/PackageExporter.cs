@@ -20,11 +20,9 @@
 //
 
 
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEditor;
-
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 
@@ -34,7 +32,7 @@ namespace LunarConsoleEditorInternal
 
     static class PackageExporter
     {
-        private static readonly string kArgumentAssetList = "assets";
+        private static readonly string kArgumentConfigFile = "config";
         private static readonly string kArgumentOutputFile = "output";
 
         private static readonly IDictionary<string, AssetProcessor> assetProcessorLookup;
@@ -44,7 +42,7 @@ namespace LunarConsoleEditorInternal
             assetProcessorLookup = new Dictionary<string, AssetProcessor>();
             assetProcessorLookup[".png"] = delegate(string assetPath)
             {
-                var importer = (TextureImporter) TextureImporter.GetAtPath(assetPath);
+                var importer = (TextureImporter)TextureImporter.GetAtPath(assetPath);
                 importer.textureType = TextureImporterType.Default;
                 importer.mipmapEnabled = false;
                 importer.filterMode = FilterMode.Point;
@@ -54,19 +52,19 @@ namespace LunarConsoleEditorInternal
                 importer.SaveAndReimport();
             };
             assetProcessorLookup[".h"] =
-            assetProcessorLookup[".m"] =
-            assetProcessorLookup[".mm"] = delegate(string assetPath)
-            {
-                var importer = (PluginImporter) PluginImporter.GetAtPath(assetPath);
-                importer.SetCompatibleWithEditor(false);
-                importer.SetCompatibleWithPlatform(BuildTarget.iOS, false);
-                importer.SetCompatibleWithPlatform(BuildTarget.Android, false);
-                importer.SetCompatibleWithPlatform(BuildTarget.WebGL, false);
-                importer.SaveAndReimport();
-            };
+                assetProcessorLookup[".m"] =
+                    assetProcessorLookup[".mm"] = delegate(string assetPath)
+                    {
+                        var importer = (PluginImporter)PluginImporter.GetAtPath(assetPath);
+                        importer.SetCompatibleWithEditor(false);
+                        importer.SetCompatibleWithPlatform(BuildTarget.iOS, false);
+                        importer.SetCompatibleWithPlatform(BuildTarget.Android, false);
+                        importer.SetCompatibleWithPlatform(BuildTarget.WebGL, false);
+                        importer.SaveAndReimport();
+                    };
             assetProcessorLookup[".aar"] = delegate(string assetPath)
             {
-                var importer = (PluginImporter) PluginImporter.GetAtPath(assetPath);
+                var importer = (PluginImporter)PluginImporter.GetAtPath(assetPath);
                 importer.SetCompatibleWithEditor(false);
                 importer.SetCompatibleWithPlatform(BuildTarget.Android, true);
                 importer.SetCompatibleWithPlatform(BuildTarget.iOS, false);
@@ -80,7 +78,14 @@ namespace LunarConsoleEditorInternal
             IDictionary<string, string> args = CommandLine.Arguments;
 
             string outputFile = GetCommandLineArg(args, kArgumentOutputFile);
-            string[] assetList = GetCommandLineArray(args, kArgumentAssetList);
+            string configFile = GetCommandLineArg(args, kArgumentConfigFile);
+
+            if (!File.Exists(configFile))
+            {
+                throw new IOException("Configuration file does not exist: " + configFile);
+            }
+
+            string[] assetList = ReadAssetsFromConfig(configFile);
 
             DirectoryInfo outputDirectory = Directory.GetParent(outputFile);
             outputDirectory.Create();
@@ -91,7 +96,7 @@ namespace LunarConsoleEditorInternal
 
             string projectDir = Directory.GetParent(Application.dataPath).FullName;
 
-            Debug.Log("Checkings assets...");
+            Debug.Log("Checking assets...");
             foreach (string asset in assetList)
             {
                 string assetPath = Path.Combine(projectDir, asset);
@@ -114,6 +119,25 @@ namespace LunarConsoleEditorInternal
             Debug.Log("Package written: " + outputFile);
         }
 
+        private static string[] ReadAssetsFromConfig(string configFile)
+        {
+            try
+            {
+                string jsonContent = File.ReadAllText(configFile);
+                return JsonUtility.FromJson<ExporterConfig>(jsonContent).assets;
+            }
+            catch (Exception ex)
+            {
+                throw new IOException("Failed to read or parse the configuration file: " + configFile, ex);
+            }
+        }
+
+        [Serializable]
+        private class ExporterConfig
+        {
+            public string[] assets;
+        }
+
         private static string GetCommandLineArg(IDictionary<string, string> args, string key)
         {
             string value;
@@ -128,12 +152,6 @@ namespace LunarConsoleEditorInternal
             }
 
             return value;
-        }
-
-        private static string[] GetCommandLineArray(IDictionary<string, string> args, string key, char delim = ',')
-        {
-            string value = GetCommandLineArg(args, key);
-            return value.Split(delim);
         }
     }
 }
