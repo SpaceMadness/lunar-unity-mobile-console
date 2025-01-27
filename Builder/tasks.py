@@ -2,6 +2,7 @@ import glob
 import re
 from os.path import abspath
 from pathlib import Path
+from pprint import pprint
 
 from invoke import task
 import os
@@ -167,7 +168,7 @@ def list_package_files(ctx):
     package_files = UnityHelper.list_package_assets(dir_project_plugin)
 
     print_header("Package files:")
-    print(package_files)
+    pprint(package_files)
 
 
 @task(pre=[init, build_native, list_package_files])
