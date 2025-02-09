@@ -35,8 +35,10 @@ def fail_script_unless_file_exists(path):
 # Params:
 # +path+:: file path to check
 def resolve_path(path):
-    fail_script_unless_file_exists(path)
-    return path
+    # Convert to Path object to normalize separators for the platform
+    normalized_path = str(Path(path).resolve())
+    fail_script_unless_file_exists(normalized_path)
+    return normalized_path
 
 
 def resolve_path_e(path):
@@ -48,6 +50,21 @@ def resolve_path_e(path):
 def not_nil(value):
     if value is None:
         fail_script('Value is nil')
+    return value
+
+
+############################################################
+
+def not_empty(value):
+    """
+    Checks if value is not None and not empty.
+    Works with strings, lists, and other container types that support len().
+    Raises RuntimeError if value is None or empty.
+    """
+    if value is None:
+        fail_script('Value is nil')
+    if hasattr(value, '__len__') and len(value) == 0:
+        fail_script('Value is empty')
     return value
 
 

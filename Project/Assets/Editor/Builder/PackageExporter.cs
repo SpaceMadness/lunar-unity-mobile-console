@@ -32,8 +32,8 @@ namespace LunarConsoleEditorInternal
 
     static class PackageExporter
     {
-        private static readonly string kArgumentConfigFile = "config";
-        private static readonly string kArgumentOutputFile = "output";
+        private static readonly string kArgumentConfigFile = "lunarConfigPath";
+        private static readonly string kArgumentOutputFile = "lunarPackagePath";
 
         private static readonly IDictionary<string, AssetProcessor> assetProcessorLookup;
 
@@ -78,7 +78,12 @@ namespace LunarConsoleEditorInternal
             IDictionary<string, string> args = CommandLine.Arguments;
 
             string outputFile = GetCommandLineArg(args, kArgumentOutputFile);
+            if (File.Exists(outputFile))
+            {
+                File.Delete(outputFile);
+            }
             string configFile = GetCommandLineArg(args, kArgumentConfigFile);
+            Debug.Log(configFile);
 
             if (!File.Exists(configFile))
             {
@@ -116,6 +121,10 @@ namespace LunarConsoleEditorInternal
             Debug.Log("Exporting assets...");
             AssetDatabase.ExportPackage(assetList, outputFile);
 
+            if (!File.Exists(outputFile))
+            {
+                throw new IOException("Failed to export package - output file was not created: " + outputFile);
+            }
             Debug.Log("Package written: " + outputFile);
         }
 

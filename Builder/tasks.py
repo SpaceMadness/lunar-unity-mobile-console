@@ -1,6 +1,5 @@
 import glob
 import re
-from os.path import abspath
 from pathlib import Path
 from pprint import pprint
 
@@ -9,97 +8,70 @@ import os
 import shutil
 import json
 
-from common import resolve_path, not_nil, print_header, exec_shell, list_files
+from common import resolve_path, not_nil, not_empty, print_header, exec_shell, list_files
 from platform import Platform
 from unity_helper import UnityHelper
 from unity_project import UnityProject
 
-# Define global variables
-dir_out = None
-dir_out_packages = None
-dir_builder = None
-dir_utils = None
-dir_repo = None
-bin_unity_export = None
-bin_unity_publish = None
-dir_project = None
-dir_project_plugin = None
-dir_project_plugin_scripts = None
-dir_project_plugin_editor = None
-dir_project_plugin_ios = None
-dir_project_plugin_android = None
-dir_native = None
-dir_native_ios = None
-dir_native_ios_src = None
-dir_native_android = None
-dir_native_android_src = None
-dir_native_ios_images_root = None
-dir_native_android_images_root = None
-dir_test_project = None
-package_version = None
-package_files = None
-package_config = None
-
 
 @task
-def init(c):
-    global dir_out, dir_out_packages, dir_builder, dir_utils, dir_repo
-    global bin_unity_export, bin_unity_publish
-    global dir_project, dir_project_plugin, dir_project_plugin_scripts
-    global dir_project_plugin_editor, dir_project_plugin_ios, dir_project_plugin_android
-    global dir_native, dir_native_ios, dir_native_ios_src, dir_native_android, dir_native_android_src
-    global dir_native_ios_images_root, dir_native_android_images_root, dir_test_project, package_version
-
-    dir_out = abspath("temp")
-    dir_out_packages = abspath(f"{dir_out}/packages")
-    dir_builder = resolve_path(".")
-    dir_utils = resolve_path(f"{dir_builder}/utils")
-    dir_repo = resolve_path(os.path.abspath(".."))
+def _init(c):
+    c.dir_out = os.path.abspath("temp")
+    c.dir_out_packages = os.path.abspath(f"{c.dir_out}/packages")
+    c.dir_builder = resolve_path(".")
+    c.dir_utils = resolve_path(f"{c.dir_builder}/utils")
+    c.dir_repo = resolve_path(os.path.abspath(".."))
 
     # Define Unity-related paths
-    bin_unity_export = resolve_path(Platform.unity_export())
-    bin_unity_publish = resolve_path(Platform.unity_publish())
+    c.bin_unity_export = resolve_path(Platform.unity_export())
+    c.bin_unity_publish = resolve_path(Platform.unity_publish())
 
     # Plugin project paths
-    dir_project = resolve_path(os.path.abspath("../Project"))
-    dir_project_plugin = resolve_path(f"{dir_project}/Assets/LunarConsole")
-    dir_project_plugin_scripts = resolve_path(f"{dir_project_plugin}/Scripts")
-    dir_project_plugin_editor = resolve_path(f"{dir_project_plugin}/Editor")
-    dir_project_plugin_ios = f"{dir_project_plugin_editor}/iOS"
-    dir_project_plugin_android = f"{dir_project_plugin_editor}/Android"
+    c.dir_project = resolve_path(os.path.abspath("../Project"))
+    c.dir_project_plugin = resolve_path(f"{c.dir_project}/Assets/LunarConsole")
+    c.dir_project_plugin_scripts = resolve_path(f"{c.dir_project_plugin}/Scripts")
+    c.dir_project_plugin_editor = resolve_path(f"{c.dir_project_plugin}/Editor")
+    c.dir_project_plugin_ios = f"{c.dir_project_plugin_editor}/iOS"
+    c.dir_project_plugin_android = f"{c.dir_project_plugin_editor}/Android"
 
     # Native project paths
-    dir_native = resolve_path(os.path.abspath("../Native"))
-    dir_native_ios = resolve_path(f"{dir_native}/iOS")
-    dir_native_ios_src = resolve_path(f"{dir_native_ios}/LunarConsole/LunarConsole")
-    dir_native_android = resolve_path(f"{dir_native}/Android")
-    dir_native_android_src = resolve_path(f"{dir_native_android}/LunarConsole")
-    dir_native_ios_images_root = resolve_path(dir_native_ios_src)
-    dir_native_android_images_root = resolve_path(f"{dir_native_android_src}/lunarConsole/src/main/res")
-    dir_test_project = resolve_path("TestProject")
-    package_version = not_nil(extract_package_version(dir_project_plugin))
+    c.dir_native = resolve_path(os.path.abspath("../Native"))
+    c.dir_native_ios = resolve_path(f"{c.dir_native}/iOS")
+    c.dir_native_ios_src = resolve_path(f"{c.dir_native_ios}/LunarConsole/LunarConsole")
+    c.dir_native_android = resolve_path(f"{c.dir_native}/Android")
+    c.dir_native_android_src = resolve_path(f"{c.dir_native_android}/LunarConsole")
+    c.dir_native_ios_images_root = resolve_path(c.dir_native_ios_src)
+    c.dir_native_android_images_root = resolve_path(f"{c.dir_native_android_src}/lunarConsole/src/main/res")
+    c.dir_test_project = resolve_path("TestProject")
+    c.package_version = not_nil(extract_package_version(c.dir_project_plugin))
+    c.package_files = None
+    c.package_config = None
 
 
-@task(pre=[init])
+@task(pre=[_init])
 def clean(c):
+    dir_out = not_empty(c.dir_out)
+
     shutil.rmtree(dir_out, ignore_errors=True)
     os.makedirs(dir_out, exist_ok=True)
 
 
-@task(pre=[init])
-def full(ctx):
-    global package_config
-    package_config = "Full"
+@task(pre=[_init])
+def _full(c):
+    c.package_config = "Full"
 
 
-@task(pre=[init])
-def free(ctx):
-    global package_config
-    package_config = "Free"
+@task(pre=[_init])
+def _free(c):
+    c.package_config = "Free"
 
 
-@task(pre=[init])
-def build_native_ios(c):
+@task(pre=[_init])
+def _build_native_ios(c):
+    dir_native_ios_src = not_nil(c.dir_native_ios_src)
+    package_config = not_nil(c.package_config)
+    dir_project_plugin_ios = not_nil(c.dir_project_plugin_ios)
+
     # List iOS project files
     ios_files = list_ios_files(dir_native_ios_src,
                                configuration=package_config,
@@ -137,8 +109,12 @@ def build_native_ios(c):
         json.dump(projmods, f, indent=4)
 
 
-@task(pre=[init])
-def build_native_android(ctx):
+@task(pre=[_init])
+def _build_native_android(c):
+    dir_project_plugin_android = not_nil(c.dir_project_plugin_android)
+    dir_native_android_src = not_nil(c.dir_native_android_src)
+    package_config = not_nil(c.package_config)
+
     # Clean up files.
     shutil.rmtree(dir_project_plugin_android, ignore_errors=True)
     os.makedirs(dir_project_plugin_android, exist_ok=True)
@@ -147,94 +123,46 @@ def build_native_android(ctx):
     build_android_plugin(dir_native_android_src, "lunarConsole", package_config, dir_project_plugin_android)
 
 
-@task(pre=[init, build_native_ios, build_native_android])
-def build_native(ctx):
+@task(pre=[_init, _build_native_ios, _build_native_android])
+def _build_native(c):
     pass
 
 
-@task(pre=[full, build_native])
-def build_native_full(ctx):
-    pass
+@task(pre=[_init])
+def _list_package_files(c):
+    dir_project_plugin = not_nil(c.dir_project_plugin)
+    c.package_files = _list_package_files_helper(dir_project_plugin)
 
 
-@task(pre=[free, build_native])
-def build_native_free(ctx):
-    pass
+@task(pre=[_init, _build_native, _list_package_files])
+def _export_package(c):
+    dir_out_packages = not_empty(c.dir_out_packages)
+    package_config = not_nil(c.package_config)
+    package_version = not_nil(c.package_version)
+    dir_project_plugin = not_nil(c.dir_project_plugin)
+    dir_project = not_nil(c.dir_project)
+    bin_unity_export = not_nil(c.bin_unity_export)
+    package_files = not_empty(c.package_files)
 
-
-@task(pre=[init])
-def list_package_files(ctx):
-    global package_files
-    package_files = UnityHelper.list_package_assets(dir_project_plugin)
-
-    print_header("Package files:")
-    pprint(package_files)
-
-
-@task(pre=[init, build_native, list_package_files])
-def export_package(ctx):
-    import os
-
-    file_package = f"{dir_out_packages}/lunar-console-{package_config.lower()}-{package_version}.unitypackage"
+    file_package = os.path.join(dir_out_packages, f"lunar-console-{package_config.lower()}-{package_version}.unitypackage")
     print(f"Exporting package: {file_package}...")
 
     override_configuration_define(resolve_path(os.path.join(dir_project_plugin, "Scripts/LunarConsole.cs")),
                                   package_config)
 
-    if not package_files:
-        raise ValueError("PACKAGE_FILES is not set")
-
     project = UnityProject(dir_project, bin_unity_export)
     project.export_unity_package(file_package, package_files)
 
-
-@task(pre=[clean, free, export_package])
-def export_unity_package_free(c):
-    pass
-
-
-@task(pre=[clean, full, export_package])
-def export_unity_package_full(c):
-    pass
-
-
-@task(pre=[clean, export_unity_package_free, export_unity_package_full])
-def export_unity_packages(c):
-    """Export unity packages"""
-    print("All Unity packages exported.")
-
-
-@task(pre=[build_native_android])
-def build_run_native_android(c):
-    project = UnityProject(dir_project, bin_unity_export)
-    project.exec_unity_method("LunarConsoleEditorInternal.AndroidPlugin.ForceUpdateFiles")
-    project.exec_unity_method("LunarConsoleEditorInternal.AppExporter.PerformAndroidBuild")
-
-    apk_path = resolve_path(glob.glob(f"{dir_project}/Build/Android/*.apk")[0])
-
-    print("Installing app...")
-    exec_shell(f'adb install -r "{apk_path}"', "Can't install app...")
-
-    print("Starting app...")
-    exec_shell(
-        'adb shell am start -n com.spacemadness.LunarConsoleTest/com.unity3d.player.UnityPlayerActivity',
-        "Can't start app"
-    )
-
-
-@task(pre=[full, build_run_native_android])
-def build_run_native_android_full(c):
-    pass
-
-
-@task(pre=[free, build_run_native_android])
-def build_run_native_android_free(c):
-    pass
+    resolve_path(file_package)
 
 
 @task
 def optimize_png_files(c):
-    """Optimize PNG files."""
+    """Optimize PNG files using pngout to reduce file sizes while maintaining quality."""
+    dir_native_ios_images_root = not_nil(c.dir_native_ios_images_root)
+    dir_native_android_images_root = not_nil(c.dir_native_android_images_root)
+    dir_utils = not_nil(c.dir_utils)
+
     files = []
     files.extend(list_png_files(dir_native_ios_images_root))
     files.extend(list_png_files(dir_native_android_images_root))
@@ -252,7 +180,82 @@ def optimize_png_files(c):
     print_header(f"Compression rate: {100 * (size_after / size_before):.2f}% ({size_after}/{size_before})")
 
 
+@task(pre=[_full, _build_native])
+def build_native_full(c):
+    """Build the full version of native iOS and Android plugins."""
+    pass
+
+
+@task(pre=[_free, _build_native])
+def build_native_free(c):
+    """Build the free version of native iOS and Android plugins."""
+    pass
+
+
+@task(pre=[clean, _free, _export_package])
+def export_unity_package_free(c):
+    """Export the free version of the Lunar Console Unity package."""
+    pass
+
+
+@task(pre=[clean, _full, _export_package])
+def export_unity_package_full(c):
+    """Export the full version of the Lunar Console Unity package."""
+    pass
+
+
+@task(pre=[clean, export_unity_package_free, export_unity_package_full])
+def export_unity_packages(c):
+    """Export both free and full versions of the Lunar Console Unity packages."""
+    print("All Unity packages exported.")
+
+
+@task(pre=[_build_native_android])
+def build_run_native_android(c):
+    """Build the Android plugin, create an APK, install and run it on a connected device."""
+    dir_project = not_nil(c.dir_project)
+    bin_unity_export = not_nil(c.bin_unity_export)
+
+    project = UnityProject(dir_project, bin_unity_export)
+    project.exec_unity_method("LunarConsoleEditorInternal.AndroidPlugin.ForceUpdateFiles")
+    project.exec_unity_method("LunarConsoleEditorInternal.AppExporter.PerformAndroidBuild")
+
+    apk_path = resolve_path(glob.glob(f"{dir_project}/Build/Android/*.apk")[0])
+
+    print("Installing app...")
+    exec_shell(f'adb install -r "{apk_path}"', "Can't install app...")
+
+    print("Starting app...")
+    exec_shell(
+        'adb shell am start -n com.spacemadness.LunarConsoleTest/com.unity3d.player.UnityPlayerActivity',
+        "Can't start app"
+    )
+
+
+@task(pre=[_full, build_run_native_android])
+def build_run_native_android_full(c):
+    """Build, install and run the full version of the Android test app."""
+    pass
+
+
+@task(pre=[_free, build_run_native_android])
+def build_run_native_android_free(c):
+    """Build, install and run the free version of the Android test app."""
+    pass
+
+
+# Helper Functions
+def _list_package_files_helper(dir_project_plugin):
+    """List and print all Unity package assets from the plugin directory."""
+    package_files = UnityHelper.list_package_assets(dir_project_plugin)
+    print_header("Package files:")
+    pprint(package_files)
+    return package_files
+
+
 def list_png_files(dir_project):
+    """Find all PNG files in the specified directory."""
+
     def is_png(file):
         if os.path.isdir(file):
             return False
@@ -262,6 +265,11 @@ def list_png_files(dir_project):
 
 
 def list_ios_files(dir_project, **kwargs):
+    """
+    List iOS source files with specific extensions (.h, .m, .mm, etc.).
+    Filters files based on Free/Full configuration if specified.
+    Can return relative paths if use_relative_path=True.
+    """
     extensions = ['.h', '.m', '.mm', '.xib', '.nib', '.c', '.cpp', '.png', '.bundle']
     configuration = kwargs.get('configuration')
 
@@ -283,6 +291,10 @@ def list_ios_files(dir_project, **kwargs):
 
 
 def build_android_plugin(dir_native_project, module_name, flavour, dir_android_plugin):
+    """
+    Build Android AAR library and copy it to the Unity plugin directory.
+    Handles both free and full flavors of the plugin.
+    """
     print_header('Building Android library...')
     file_aar = build_android(dir_native_project, module_name, flavour)
 
@@ -291,6 +303,10 @@ def build_android_plugin(dir_native_project, module_name, flavour, dir_android_p
 
 
 def build_android(dir_project, module_name, flavour, config='Release'):
+    """
+    Build Android library using Gradle.
+    Returns the path to the generated AAR file.
+    """
     original_dir = os.getcwd()
     os.chdir(dir_project)
 
@@ -302,18 +318,23 @@ def build_android(dir_project, module_name, flavour, config='Release'):
         exec_shell(command, "Can't build Android aar")
         aar_path = os.path.join(module_name, 'build', 'outputs', 'aar',
                                 f"{module_name}-{flavour.lower()}-{config.lower()}.aar")
-        return resolve_path(abspath(aar_path))
+        return resolve_path(os.path.abspath(aar_path))
     finally:
         os.chdir(original_dir)
 
 
 def write_project_properties(file, properties):
+    """Write key-value pairs to a properties file."""
     with open(file, 'w') as f:
         for name, value in properties.items():
             f.write(f"{name}={value}\n")
 
 
 def override_configuration_define(file_script, configuration):
+    """
+    Modify the configuration define in the LunarConsole.cs script.
+    Switches between LUNAR_CONSOLE_FREE and LUNAR_CONSOLE_FULL.
+    """
     with open(file_script, 'r') as f:
         source = f.read()
 
@@ -329,6 +350,10 @@ def override_configuration_define(file_script, configuration):
 
 
 def extract_package_version(dir_project):
+    """
+    Extract package version from Constants.cs file.
+    Returns version string in format "X.Y.Z" or with optional suffix.
+    """
     file_version = Path(dir_project) / "Scripts" / "Constants.cs"
     source = file_version.read_text()
 

@@ -1,6 +1,9 @@
 import os
 import shutil
 
+from common import resolve_path
+
+
 class UnityHelper:
 
     @staticmethod
@@ -32,7 +35,7 @@ class UnityHelper:
         Recursively list assets in the given path, applying a filter function if provided.
         """
         for file in os.listdir(path):
-            full_path = os.path.join(path, file)
+            full_path = resolve_path(os.path.join(path, file))
 
             # Skip .meta files
             if os.path.isfile(full_path) and full_path.endswith('.meta'):
