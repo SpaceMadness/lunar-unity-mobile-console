@@ -29,16 +29,17 @@ import android.text.style.CharacterStyle;
 import android.text.style.ForegroundColorSpan;
 import android.text.style.StyleSpan;
 
+import androidx.test.platform.app.InstrumentationRegistry;
+
 import org.junit.Before;
 import org.junit.Test;
 
-import static android.support.test.InstrumentationRegistry.getContext;
+import java.util.HashMap;
+import java.util.Map;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static spacemadness.com.lunarconsole.console.DefaultRichTextFactory.Span;
-
-import java.util.HashMap;
-import java.util.Map;
 
 public class RichTextFactoryTest {
     private StyleSpan bold;
@@ -50,7 +51,7 @@ public class RichTextFactoryTest {
 
     @Before
     public void setup() {
-        colorFactory = new DefaultColorFactory(getContext());
+        colorFactory = new DefaultColorFactory(InstrumentationRegistry.getInstrumentation().getTargetContext());
 
         // we need to use fake style factory which will use cached objects to make test pass
         richTextFactory = new DefaultRichTextFactory(colorFactory, FAKE_STYLE_FACTORY);

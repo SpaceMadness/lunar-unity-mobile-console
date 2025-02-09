@@ -26,52 +26,33 @@ using System.IO;
 
 namespace LunarConsoleEditorInternal
 {
-    static class CommandLine
+    internal static class CommandLine
     {
-        private static readonly string kCustomArgsPrefix = "-customArgs?";
-
         public static IDictionary<string, string> Arguments
         {
             get
             {
-                IDictionary<string, string> args = new Dictionary<string, string>();
-
-                string argsToken = GetCustomArgToken();
-
-                if (!string.IsNullOrEmpty(argsToken))
+                var parsedArgs = new Dictionary<string, string>();
+                var commandLineArgs = Environment.GetCommandLineArgs();
+                for (var i = 0; i < commandLineArgs.Length; i++)
                 {
-                    string[] pairs = argsToken.Split('&');
-                    foreach (string pair in pairs)
+                    if (commandLineArgs[i].StartsWith("-") && commandLineArgs[i].Length > 1)
                     {
-                        string[] tokens = pair.Split('=');
-                        if (tokens.Length != 2)
+                        var key = commandLineArgs[i].Substring(1);
+                        string value = null;
+
+                        if (i + 1 < commandLineArgs.Length && !commandLineArgs[i + 1].StartsWith("-"))
                         {
-                            throw new IOException("Unable to parse custom args: " + argsToken);
+                            value = commandLineArgs[i + 1];
+                            i++;
                         }
 
-                        string key = tokens[0];
-                        string value = tokens[1];
-                        args[key] = value;
+                        parsedArgs[key] = value;
                     }
                 }
 
-                return args;
+                return parsedArgs;
             }
-        }
-
-        private static string GetCustomArgToken()
-        {
-            string[] args = Environment.GetCommandLineArgs();
-            foreach (string arg in args)
-            {
-                if (arg.StartsWith(kCustomArgsPrefix))
-                {
-                    return arg.Substring(kCustomArgsPrefix.Length);
-                }
-            }
-
-            return null;
         }
     }
 }
-

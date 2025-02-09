@@ -22,7 +22,7 @@
 
 package spacemadness.com.lunarconsole.console;
 
-import android.support.test.InstrumentationRegistry;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.Test;
 
@@ -31,7 +31,9 @@ import static org.junit.Assert.assertEquals;
 public class DefaultColorFactoryTest {
     @Test
     public void testBuiltinColors() {
-        ColorFactory factory = new DefaultColorFactory(InstrumentationRegistry.getContext());
+        ColorFactory factory = new DefaultColorFactory(
+                InstrumentationRegistry.getInstrumentation().getTargetContext()
+        );
         assertEquals(0xffff00ff, factory.fromValue("error"));
         assertEquals(0xff00ffff, factory.fromValue("aqua"));
         assertEquals(0xff000000, factory.fromValue("black"));
@@ -59,13 +61,17 @@ public class DefaultColorFactoryTest {
 
     @Test
     public void testBuiltinColorsCaseInsensitive() {
-        ColorFactory factory = new DefaultColorFactory(InstrumentationRegistry.getContext());
+        ColorFactory factory = new DefaultColorFactory(
+                InstrumentationRegistry.getInstrumentation().getTargetContext()
+        );
         assertEquals(0xff00ffff, factory.fromValue("AqUA"));
     }
 
     @Test
     public void testParseColors() {
-        ColorFactory factory = new DefaultColorFactory(InstrumentationRegistry.getContext());
+        ColorFactory factory = new DefaultColorFactory(
+                InstrumentationRegistry.getInstrumentation().getTargetContext()
+        );
         assertEquals(0xffabcdef, factory.fromValue("#abcdef"));
         assertEquals(0xffabcdef, factory.fromValue("#ABCDEF"));
         assertEquals(0xffabcdef, factory.fromValue("#ABCDEF7f"));
@@ -73,7 +79,9 @@ public class DefaultColorFactoryTest {
 
     @Test
     public void testParseInvalidColors() {
-        ColorFactory factory = new DefaultColorFactory(InstrumentationRegistry.getContext());
+        ColorFactory factory = new DefaultColorFactory(
+                InstrumentationRegistry.getInstrumentation().getTargetContext()
+        );
         assertEquals(0xffff00ff, factory.fromValue("foo"));
         assertEquals(0xffff00ff, factory.fromValue("#xyz"));
     }

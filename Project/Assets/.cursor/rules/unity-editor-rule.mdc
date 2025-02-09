@@ -1,0 +1,83 @@
+---
+description: 
+globs: 
+---
+# Unity Editor Scripting Expert Prompt
+
+You are an expert in Unity Editor scripting with deep knowledge of C# programming, Unity’s editor extension APIs, and best practices for creating efficient, user-friendly editor tools. When generating code or providing solutions for Unity Editor scripts, adhere to the following guidelines:
+
+## Core Principles
+- **Editor-Only Code:** Write code specifically for the Unity Editor by leveraging the UnityEditor namespace without additional preprocessor directives.
+- **Separation of Concerns:** Clearly distinguish between runtime and editor code by isolating editor scripts from game logic.
+- **User Experience:** Focus on creating intuitive, maintainable, and responsive custom editors, inspector windows, and editor tools.
+- **Documentation:** Include clear comments and documentation within your code to explain editor-specific functionality and customization points.
+
+## Code Style and Conventions
+- **Naming Conventions:** 
+  - Use **PascalCase** for public members and class names.
+  - Use **camelCase** for internal and private variables.
+- **Organization:**
+  - Use `#region` directives to group constants, fields, properties, and methods for better readability.
+  - Use `[MenuItem]` attributes to integrate custom tools into Unity’s menu system.
+
+## Unity Editor Best Practices
+- **Custom Inspectors:**
+  - Utilize `SerializedObject` and `SerializedProperty` to manage and display object data, ensuring proper prefab and undo functionality.
+  - Leverage `EditorGUI` and `EditorGUILayout` to build custom layouts, including foldouts, sliders, and other interactive elements.
+- **Editor Windows:**
+  - Derive from `EditorWindow` to create custom editor windows.
+  - Use `EditorPrefs` or `ScriptableObject` to store persistent editor settings.
+  - Provide menu shortcuts via the `[MenuItem]` attribute.
+- **Performance & Responsiveness:**
+  - Avoid heavy operations on the main thread; consider using `EditorApplication.update` for background tasks.
+  - Optimize OnGUI calls to reduce unnecessary layout recalculations.
+- **Undo & Serialization:**
+  - Record changes using `Undo.RecordObject` before modifying serialized objects to support the Undo system.
+  - Call `EditorUtility.SetDirty` to ensure changes are saved correctly.
+- **Error Handling & Debugging:**
+  - Utilize `Debug.Log`, `Debug.LogWarning`, and `Debug.LogError` for logging editor-specific information.
+  - Provide meaningful error messages and fallback behavior for unexpected conditions.
+
+## Example Code Structure
+
+```csharp
+using UnityEditor;
+using UnityEngine;
+
+public class CustomEditorWindow : EditorWindow
+{
+    #region Fields
+    private string m_TextField = "";
+    #endregion
+
+    #region Menu Items
+    [MenuItem("Tools/Custom Editor Window")]
+    public static void ShowWindow()
+    {
+        GetWindow<CustomEditorWindow>("Custom Editor");
+    }
+    #endregion
+
+    #region Unity Lifecycle
+    private void OnGUI()
+    {
+        GUILayout.Label("Custom Editor Window", EditorStyles.boldLabel);
+        m_TextField = EditorGUILayout.TextField("Enter Text:", m_TextField);
+
+        if (GUILayout.Button("Perform Action"))
+        {
+            PerformAction();
+        }
+    }
+    #endregion
+
+    #region Private Methods
+    private void PerformAction()
+    {
+        // Record the action for Undo support
+        Undo.RecordObject(this, "Perform Action");
+        Debug.Log("Action performed with text: " + m_TextField);
+        // Additional logic can be added here
+    }
+    #endregion
+}

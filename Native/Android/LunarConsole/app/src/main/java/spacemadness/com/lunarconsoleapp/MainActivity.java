@@ -101,11 +101,11 @@ public class MainActivity extends Activity {
         mainQueue = DispatchQueue.mainQueue();
         backgroundQueue = DispatchQueue.createSerialQueue("background");
 
-        delayEditText = (EditText) findViewById(R.id.test_edit_text_delay);
-        capacityEditText = (EditText) findViewById(R.id.test_edit_text_capacity);
-        trimEditText = (EditText) findViewById(R.id.test_edit_text_trim);
-        useMainThreadCheckBox = (CheckBox) findViewById(R.id.test_checkbox_use_main_thread);
-        enableStackTraceCheckBox = (CheckBox) findViewById(R.id.test_checkbox_enable_stack_trace);
+        delayEditText = findViewById(R.id.test_edit_text_delay);
+        capacityEditText = findViewById(R.id.test_edit_text_capacity);
+        trimEditText = findViewById(R.id.test_edit_text_trim);
+        useMainThreadCheckBox = findViewById(R.id.test_checkbox_use_main_thread);
+        enableStackTraceCheckBox = findViewById(R.id.test_checkbox_enable_stack_trace);
 
         restoreUIState();
 
@@ -113,8 +113,8 @@ public class MainActivity extends Activity {
         final int trim = Integer.parseInt(trimEditText.getText().toString());
 
         dispatchOnSelectedQueue(new DispatchTask() {
-			@Override
-			protected void execute() {
+            @Override
+            protected void execute() {
                 if (!shutdownPluginWhenDestroyed) {
                     if (consolePlugin != null) {
                         consolePlugin.destroy(); // kill any previous instance
@@ -179,8 +179,8 @@ public class MainActivity extends Activity {
                                 logIndex = (logIndex + 1) % entries.size();
 
                                 dispatchOnSelectedQueue(new DispatchTask() {
-									@Override
-									protected void execute() {
+                                    @Override
+                                    protected void execute() {
                                         String stacktrace = isStackTraceEnabled() ? entry.stacktrace : null;
                                         consolePlugin.logMessage(entry.type, stacktrace, entry.message);
                                     }
@@ -241,33 +241,23 @@ public class MainActivity extends Activity {
             }
         });
 
-        Button errorButton = (Button) findViewById(R.id.test_button_log_exception);
-        errorButton.setOnClickListener(new View.OnClickListener() {
+        Button errorButton = findViewById(R.id.test_button_log_exception);
+        errorButton.setOnClickListener(v -> dispatchOnSelectedQueue(new DispatchTask() {
             @Override
-            public void onClick(View v) {
-            	dispatchOnSelectedQueue(new DispatchTask() {
-					@Override
-					protected void execute() {
-                        consolePlugin.logMessage(EXCEPTION, "UnityEngine.Debug:LogError(Object)\n" +
-                                "Test:Method(String) (at /Users/lunar-unity-console/Project/Assets/Scripts/Test.cs:30)\n" +
-                                "<LogMessages>c__Iterator0:MoveNext() (at /Users/lunar-unity-console/Project/Assets/Logger.cs:85)\n" +
-                                "UnityEngine.MonoBehaviour:StartCoroutine(IEnumerator)\n" +
-                                "Logger:LogMessages() (at /Users/lunar-unity-console/Project/Assets/Logger.cs:66)\n" +
-                                "UnityEngine.EventSystems.EventSystem:Update()", "Exception is thrown");
-                    }
-                });
+            protected void execute() {
+                consolePlugin.logMessage(EXCEPTION, "UnityEngine.Debug:LogError(Object)\n" +
+                        "Test:Method(String) (at /Users/lunar-unity-console/Project/Assets/Scripts/Test.cs:30)\n" +
+                        "<LogMessages>c__Iterator0:MoveNext() (at /Users/lunar-unity-console/Project/Assets/Logger.cs:85)\n" +
+                        "UnityEngine.MonoBehaviour:StartCoroutine(IEnumerator)\n" +
+                        "Logger:LogMessages() (at /Users/lunar-unity-console/Project/Assets/Logger.cs:66)\n" +
+                        "UnityEngine.EventSystems.EventSystem:Update()", "Exception is thrown");
             }
-        });
+        }));
 
-        final Button showConsole = (Button) findViewById(R.id.test_button_show_console);
-        showConsole.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                openConsole();
-            }
-        });
+        final Button showConsole = findViewById(R.id.test_button_show_console);
+        showConsole.setOnClickListener(v -> openConsole());
 
-        final Button showOverlay = (Button) findViewById(R.id.test_button_show_overlay);
+        final Button showOverlay = findViewById(R.id.test_button_show_overlay);
         showOverlay.setEnabled(false);
 //		showOverlay.setOnClickListener(new View.OnClickListener() {
 //			@Override
@@ -318,7 +308,6 @@ public class MainActivity extends Activity {
 //		});
     }
 
-    @TargetApi(Build.VERSION_CODES.KITKAT)
     private String readTextAsset(String filename) {
         try (InputStream stream = getAssets().open(filename)) {
             try (final BufferedReader reader = new BufferedReader(new InputStreamReader(stream))) {
@@ -353,9 +342,9 @@ public class MainActivity extends Activity {
         }
 
         if (shutdownPluginWhenDestroyed) {
-        	dispatchOnSelectedQueue(new DispatchTask() {
-				@Override
-				protected void execute() {
+            dispatchOnSelectedQueue(new DispatchTask() {
+                @Override
+                protected void execute() {
                     consolePlugin.destroy();
                 }
             });
@@ -443,18 +432,15 @@ public class MainActivity extends Activity {
     // Helpers
 
     private void setLogOnClickListener(int id, final byte logType) {
-        setOnClickListener(id, new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                final EditText messageText = findViewById(R.id.test_edit_message);
-                dispatchOnSelectedQueue(new DispatchTask() {
-                    @Override
-                    protected void execute() {
-                        String message = messageText.getText().toString();
-                        consolePlugin.logMessage(logType, "", message);
-                    }
-                });
-            }
+        setOnClickListener(id, v -> {
+            final EditText messageText = findViewById(R.id.test_edit_message);
+            dispatchOnSelectedQueue(new DispatchTask() {
+                @Override
+                protected void execute() {
+                    String message = messageText.getText().toString();
+                    consolePlugin.logMessage(logType, "", message);
+                }
+            });
         });
     }
 
