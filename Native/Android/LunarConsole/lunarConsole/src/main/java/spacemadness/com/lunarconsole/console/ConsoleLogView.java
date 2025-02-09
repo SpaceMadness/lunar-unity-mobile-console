@@ -25,6 +25,7 @@ package spacemadness.com.lunarconsole.console;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -265,24 +266,23 @@ public class ConsoleLogView extends AbstractConsoleView implements
         try {
             String packageName = getContext().getPackageName();
             String subject = StringUtils.format("'%s' console log", packageName);
-
             String outputText = console.getText();
 
-            Intent intent = new Intent(Intent.ACTION_SENDTO);
-            intent.setData(Uri.parse("mailto:")); // only email apps should handle this
+            Intent intent = new Intent(Intent.ACTION_SEND);
+            intent.setType("message/rfc822");
             intent.putExtra(Intent.EXTRA_SUBJECT, subject);
             intent.putExtra(Intent.EXTRA_TEXT, outputText);
             if (emails != null && emails.length > 0) {
                 intent.putExtra(Intent.EXTRA_EMAIL, emails);
             }
 
-            if (intent.resolveActivity(getContext().getPackageManager()) != null) {
-                getContext().startActivity(intent);
+            try {
+                getContext().startActivity(Intent.createChooser(intent, "Send email..."));
                 return true;
+            } catch (ActivityNotFoundException ex) {
+                UIUtils.showToast(getContext(), "No email clients installed");
+                return false;
             }
-
-            UIUtils.showToast(getContext(), "Can't send email");
-            return false;
         } catch (Exception e) {
             Log.e(e, "Error while trying to send console output by email");
         }
