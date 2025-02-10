@@ -7,7 +7,7 @@ Asset store links:
 - PRO: [https://assetstore.unity.com/packages/tools/gui/lunar-mobile-console-pro-43800](https://assetstore.unity.com/packages/tools/gui/lunar-mobile-console-pro-43800)  
 - FREE: [https://assetstore.unity.com/packages/tools/gui/lunar-mobile-console-free-82881](https://assetstore.unity.com/packages/tools/gui/lunar-mobile-console-free-82881)  
   
-Requires Unity 2017.1.0f1 or later.
+Requires Unity 2019.4.0f1 or later.
 
 **iOS demo app:** ~~coming soon~~ Apple forbids any kind of demos on the App Store.  
 **Android demo app:** [Google Play Store](https://play.google.com/store/apps/details?id=com.spacemadness.LunarConsole)
