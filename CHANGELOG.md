@@ -1,5 +1,12 @@
 # Lunar Console Changelog
 
+## v.1.9.0 - 02/09/2025
+
+**Fixes:**
+
+* Fixed a crash on Android in Unity 6.
+* Fixed a bug that prevented sending logs via email.
+
 ## v.1.8.5 - 10/22/2021
 
 **Fixes:**
